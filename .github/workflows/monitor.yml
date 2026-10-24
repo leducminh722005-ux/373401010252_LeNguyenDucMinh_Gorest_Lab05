@@ -11,8 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Run Postman Collection
-        uses: postmanlabs/postman-cli-action@v1
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          api-key: ${{ secrets.POSTMAN_API_KEY }}
-          command: 'collection run 59100167-91d36dbb-dbc9-412e-9012-8b96c752f96f --environment 59100167-a0b71b9a-7f96-4378-b91e-137426ce5acc'
+          node-version: '22'
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run GoRest Health Check
+        run: |
+          newman run GoRest_Monitor.postman_collection.json --reporters cli
