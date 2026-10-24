@@ -1,0 +1,58 @@
+{
+  "info": {
+    "name": "GoRest_Production_Monitor",
+    "description": "Lab 05 — GoRest production health check. Standalone public request; no environment needed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check Users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"API hoạt động bình thường (Status 200)\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Thời gian phản hồi dưới 800ms\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(800);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://gorest.co.in/public/v2/users?per_page=1",
+          "protocol": "https",
+          "host": [
+            "gorest",
+            "co",
+            "in"
+          ],
+          "path": [
+            "public",
+            "v2",
+            "users"
+          ],
+          "query": [
+            {
+              "key": "per_page",
+              "value": "1"
+            }
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        },
+        "description": "Monitor GoRest GET /public/v2/users; expect 200, response time <800ms."
+      },
+      "response": []
+    }
+  ]
+}
