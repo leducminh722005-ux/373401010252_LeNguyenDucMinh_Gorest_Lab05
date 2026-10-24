@@ -1,4 +1,5 @@
 
+
 name: GoRest Production Monitor
 
 on:
@@ -11,25 +12,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Bước 1: Lấy dữ liệu Repository
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # Bước 2: Cài đặt Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
+      # Bước 3: Cài đặt Newman
       - name: Install Newman
         run: npm install -g newman
 
-      - name: Run GoRest Health Check
-        run: |
-          newman run GoRest_Monitor.postman_collection.json --reporters cli
-
+      # Bước 4: Kiểm tra kết nối và tốc độ GoRest API
       - name: Diagnose GoRest Response Time
         run: |
-          for i in 1 2 3; do
+          echo "======================================"
+          echo "GoRest API - Network Diagnostics"
+          echo "======================================"
+
+          for url in \
+            "https://gorest.co.in/public/v2/users" \
+            "https://gorest.co.in/public/v2/users?per_page=1"
+          do
+            echo "--------------------------------------"
+            echo "Checking: $url"
+
             curl -sS -o /dev/null \
-              -w "Test $i | HTTP: %{http_code} | DNS: %{time_namelookup}s | TLS: %{time_appconnect}s | First byte: %{time_starttransfer}s | Total: %{time_total}s\n" \
-              "https://gorest.co.in/public/v2/users?per_page=1"
+              --max-time 15 \
+              -w "HTTP: %{http_code} | DNS: %{time_namelookup}s | TLS: %{time_appconnect}s | First Byte: %{time_starttransfer}s | Total: %{time_total}s\n" \
+              "$url" || true
+
           done
+
+          echo "======================================"
+          echo "Diagnostics Completed"
+          echo "======================================"
+
+      # Bước 5: Chạy Collection kiểm thử Production
+      - name: Run GoRest Health Check
+        run: |
+          newman run GoRest_Monitor.postman_collection.json \
+            --reporters cli
