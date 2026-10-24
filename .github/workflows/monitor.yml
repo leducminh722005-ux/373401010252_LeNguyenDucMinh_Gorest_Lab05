@@ -25,3 +25,11 @@ jobs:
       - name: Run GoRest Health Check
         run: |
           newman run GoRest_Monitor.postman_collection.json --reporters cli
+
+      - name: Diagnose GoRest Response Time
+        run: |
+          for i in 1 2 3; do
+            curl -sS -o /dev/null \
+              -w "Test $i | HTTP: %{http_code} | DNS: %{time_namelookup}s | TLS: %{time_appconnect}s | First byte: %{time_starttransfer}s | Total: %{time_total}s\n" \
+              "https://gorest.co.in/public/v2/users?per_page=1"
+          done
