@@ -11,26 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check GoRest API
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run GoRest Health Check
         run: |
-          result=$(curl -sS -o /dev/null \
-            -w "%{http_code} %{time_total}" \
-            --max-time 15 \
-            https://gorest.co.in/public/v2/users)
+          newman run GoRest_Monitor.postman_collection.json --reporters cli
 
-          read -r status time <<< "$result"
-
-          echo "HTTP Status: $status"
-          echo "Response Time: ${time}s"
-
-          test "$status" = "200"
-
-          awk -v t="$time" 'BEGIN {
-            if (t < 0.8) {
-              print "PASS: Response time below 800ms"
-              exit 0
-            } else {
-              print "FAIL: Response time >= 800ms"
-              exit 1
-            }
-          }'
