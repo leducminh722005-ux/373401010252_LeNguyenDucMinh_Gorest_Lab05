@@ -1,28 +1,25 @@
+pipeline {
+  agent any
 
-name: GoRest Production Monitor
+  tools {nodejs "{your_nodejs_configured_tool_name}"}
 
-on:
-  schedule:
-    - cron: '0 * * * *'
-  workflow_dispatch:
+  stages {
+    stage('Install Postman CLI') {
+      steps {
+        sh 'curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh'
+      }
+    }
 
-jobs:
-  monitor-api:
-    runs-on: ubuntu-latest
+    stage('Postman CLI Login') {
+      steps {
+        sh 'postman login --with-api-key $POSTMAN_API_KEY'
+        }
+    }
 
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Newman
-        run: npm install -g newman
-
-      - name: Run GoRest Health Check
-        run: |
-          newman run GoRest_Monitor.postman_collection.json --reporters cli
-
+    stage('Running collection') {
+      steps {
+        sh 'postman collection run "59100167-91d36dbb-dbc9-412e-9012-8b96c752f96f'
+      }
+    }
+  }
+}
