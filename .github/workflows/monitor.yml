@@ -2,9 +2,14 @@
 
 name: GoRest Production Monitor
 
+
 on:
-  schedule:
-    - cron: '0 * * * *'
+  push:
+    paths:
+      - 'GoRest.postman_collection.json'
+      - 'GoRest.postman_environment.json'
+      - 'users.csv'
+      - '.github/workflows/api-test.yml'
   workflow_dispatch:
 
 jobs:
