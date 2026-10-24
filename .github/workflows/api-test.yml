@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout mã nguồn
+      - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Cài đặt Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Cài đặt Newman
+      - name: Install Newman
         run: npm install -g newman
 
-      - name: Chạy API Testing với CSV
+      - name: Run GoRest API Tests with CSV
         env:
           GOREST_TOKEN: ${{ secrets.GOREST_TOKEN }}
         run: |
