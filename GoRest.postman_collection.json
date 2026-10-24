@@ -1,0 +1,417 @@
+{
+  "info": {
+    "_postman_id": "d109bb8c-f6e8-4914-a372-030959cda0dd",
+    "name": "2373401010252_LeNguyenDucMinh_Gorest",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "59100167",
+    "_collection_link": "https://go.postman.co/collection/59100167-d109bb8c-f6e8-4914-a372-030959cda0dd?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Positive_Cases",
+      "item": [
+        {
+          "name": "Create User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Đọc dữ liệu từ hàng CSV hiện tại và tạo email duy nhất cho mỗi lần chạy.",
+                  "const csvEmail = pm.iterationData.get(\"email\");",
+                  "if (typeof csvEmail !== \"string\" || !/^[^@\\s]+@[^@\\s]+$/.test(csvEmail)) {",
+                  "    throw new Error(\"users.csv thiếu email hợp lệ ở iteration \" + (pm.info.iteration + 1));",
+                  "}",
+                  "",
+                  "const at = csvEmail.lastIndexOf(\"@\");",
+                  "const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 9);",
+                  "const uniqueEmail = csvEmail.slice(0, at) + \".\" + suffix + csvEmail.slice(at);",
+                  "",
+                  "// Biến local 'email' có độ ưu tiên cao hơn biến data 'email' của CSV.",
+                  "pm.variables.set(\"email\", uniqueEmail);",
+                  "pm.environment.set(\"expectedEmail\", uniqueEmail);",
+                  "",
+                  "// Tránh vô tình dùng ID/email của vòng lặp trước khi POST không thành công.",
+                  "pm.environment.unset(\"UserID\");",
+                  "pm.environment.unset(\"createdEmail\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Tạo User thành công (Status 201)\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "",
+                  "    pm.test(\"User có ID hợp lệ\", function () {",
+                  "        pm.expect(jsonData.id).to.exist;",
+                  "    });",
+                  "    pm.test(\"Tên User khớp với CSV\", function () {",
+                  "        pm.expect(jsonData.name).to.eql(pm.iterationData.get(\"name\"));",
+                  "    });",
+                  "    pm.test(\"Email User khớp với dữ liệu tạo từ CSV\", function () {",
+                  "        pm.expect(jsonData.email).to.eql(pm.environment.get(\"expectedEmail\"));",
+                  "    });",
+                  "",
+                  "    pm.environment.set(\"UserID\", jsonData.id);",
+                  "    pm.environment.set(\"createdEmail\", jsonData.email);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"name\": \"{{name}}\",\r\n    \"gender\": \"{{gender}}\",\r\n    \"email\": \"{{email}}\",\r\n    \"status\": \"{{status}}\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Lấy User thành công (Status 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.test(\"User ID chính xác\", function () {",
+                  "        pm.expect(String(jsonData.id)).to.eql(String(pm.environment.get(\"UserID\")));",
+                  "    });",
+                  "    pm.test(\"Tên User khớp với CSV\", function () {",
+                  "        pm.expect(jsonData.name).to.eql(pm.iterationData.get(\"name\"));",
+                  "    });",
+                  "    pm.test(\"Email User khớp với dữ liệu tạo từ CSV\", function () {",
+                  "        pm.expect(jsonData.email).to.eql(pm.environment.get(\"expectedEmail\"));",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users/{{UserID}}",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users",
+                "{{UserID}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Cập nhật User thành công (Status 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.test(\"User ID khớp với ID vừa tạo\", function () {",
+                  "        pm.expect(String(jsonData.id)).to.eql(String(pm.environment.get(\"UserID\")));",
+                  "    });",
+                  "    pm.test(\"Trạng thái User đã chuyển thành inactive\", function () {",
+                  "        pm.expect(jsonData.status).to.eql(\"inactive\");",
+                  "    });",
+                  "}",
+                  "",
+                  "// Nhảy sang Negative_Cases trước khi xóa User, giữ cả 2 folder theo bài Lab.",
+                  "pm.execution.setNextRequest(\"Create User Without Token\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"status\": \"inactive\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users/{{UserID}}",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users",
+                "{{UserID}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Xóa User thành công (Status 204)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "pm.test(\"Response không chứa dữ liệu\", function () {",
+                  "    pm.expect(pm.response.text()).to.be.empty;",
+                  "});",
+                  "",
+                  "// Xác nhận User đã thực sự bị xóa.",
+                  "pm.execution.setNextRequest(\"Get Deleted User\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users/{{UserID}}",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users",
+                "{{UserID}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{Token}}",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Negative_Cases",
+      "item": [
+        {
+          "name": "Create User Without Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Hệ thống từ chối tạo User không có Token (Status 401)\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "pm.test(\"Không tạo User thành công\", function () {",
+                  "    pm.expect(pm.response.code).to.not.eql(201);",
+                  "});",
+                  "",
+                  "// Tiếp tục test email trùng khi User của Happy Path còn tồn tại.",
+                  "pm.execution.setNextRequest(\"Create Duplicate Email\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"name\": \"Le Nguyen Duc Minh\",\r\n    \"gender\": \"male\",\r\n    \"email\": \"noauth.{{$guid}}@example.com\",\r\n    \"status\": \"active\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Duplicate Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Hệ thống từ chối Email trùng (Status 422)\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 422) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.test(\"Thông báo Email đã tồn tại\", function () {",
+                  "        pm.expect(jsonData).to.be.an(\"array\");",
+                  "        const emailError = jsonData.find(function (item) {",
+                  "            return item.field === \"email\";",
+                  "        });",
+                  "        pm.expect(emailError, \"GoRest cần báo lỗi cho trường email\").to.exist;",
+                  "        pm.expect(String(emailError.message).toLowerCase()).to.include(\"taken\");",
+                  "    });",
+                  "}",
+                  "",
+                  "// Sau khi test email trùng, mới xóa User vừa tạo.",
+                  "pm.execution.setNextRequest(\"Delete User\");"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{Token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\r\n{\r\n    \"name\": \"Duplicate User Test\",\r\n    \"gender\": \"male\",\r\n    \"email\": \"{{createdEmail}}\",\r\n    \"status\": \"active\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Deleted User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"User đã bị xóa (Status 404)\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "if (pm.response.code === 404) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.test(\"Hệ thống thông báo không tìm thấy User\", function () {",
+                  "        pm.expect(jsonData).to.have.property(\"message\");",
+                  "        pm.expect(jsonData.message).to.include(\"Resource not found\");",
+                  "    });",
+                  "}",
+                  "// Đây là request cuối của Collection: để Newman tự chuyển iteration tiếp theo."
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{Token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BaseURL}}public/v2/users/{{UserID}}",
+              "host": [
+                "{{BaseURL}}public"
+              ],
+              "path": [
+                "v2",
+                "users",
+                "{{UserID}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer"
+      }
+    }
+  ]
+}
